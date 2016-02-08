@@ -2,6 +2,7 @@ package main_threads;
 
 import lejos.hardware.BrickFinder;
 import lejos.hardware.Button;
+import lejos.hardware.Sound;
 import lejos.hardware.lcd.Font;
 import lejos.hardware.lcd.GraphicsLCD;
 import lejos.hardware.motor.Motor;
@@ -52,7 +53,10 @@ public class WalkForwardUntilDist {
 
 		while (!Button.ENTER.isDown()) {
 			roboKiller.forward();
+			Sound.playNote(Sound.FLUTE, 510, 100);
 		}
+		
+		// this is the latest commit, at 23:53
 
 	}
 
