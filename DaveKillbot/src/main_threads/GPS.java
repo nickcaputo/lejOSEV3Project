@@ -3,22 +3,27 @@ package main_threads;
 import java.util.BitSet;
 
 import lejos.hardware.lcd.GraphicsLCD;
-
+/**
+ * 
+ * @author CGreen
+ *
+ */
 public class GPS {
 	// orientation is: 0=N, 1=E, 2=S, 3=W
 	private int x, y, orientation, numRows, numColumns;
-	private BitSet[][] wallData; // [N, E, S, W]
+	private BitSet[][] wallData; // [N, E, S, W, goneN, goneE, goneS, goneW, visited]
 	private MazeRevealMap mazeMap;
+	
 	/**
 	 * Class constructor
 	 * @param startX - starting x position
 	 * @param startY - starting y position 
-	 * @param startOrientation - starting orientation [0=N, 1=E, 2=S, 3=W]
+	 * @param startOrientation - starting orientation (0=N, 1=E, 2=S, 3=W)
 	 * @param numRows - number of rows of cells in the maze
 	 * @param numColumns - number of columns of cells in the maze
 	 * @param screen - the leJOS robot's lcd screen
 	 */
-	public GPS(int startX, int startY, int startOrientation, int numRows, int numColumns, GraphicsLCD screen) {
+	public GPS(GraphicsLCD screen, int startX, int startY, int startOrientation, int numRows, int numColumns) {
 		x = startX;
 		y = startY;
 		orientation = startOrientation%4;
@@ -28,26 +33,14 @@ public class GPS {
 		mazeMap = new MazeRevealMap(screen, numRows, numColumns);
 		for (int i = 0; i < wallData.length; i++) {
 			for (int j = 0; j < wallData[i].length; j++) {
-				wallData[i][j] = new BitSet(4);
+				wallData[i][j] = new BitSet(9);
 			}
 		}
 		
 	}
-	// debug method to learn how bitsets work
-	/*public void showMeTheWalls() {
-		for (int i = 0; i < wallData.length; i++) {
-			for (int j = 0; j < wallData[i].length; j++) {
-				System.out.print(wallData[i][j].get(0));
-				System.out.print(wallData[i][j].get(1));
-				System.out.print(wallData[i][j].get(2));
-				System.out.print(wallData[i][j].get(3));
-				System.out.print(" ");
-			}
-			System.out.println();
-		}
-	}*/
+
 	/**
-	 * Updates the GPS with the new orientation.
+	 * Updates the GPS with the robot's new orientation.
 	 * 
 	 * The orientation should be updated each time after
 	 * the robot has performed a 90 degree rotation.
@@ -62,22 +55,31 @@ public class GPS {
 	
 	/**
 	 * Updates the GPS with new coordinates based on how many cells
-	 * were traversed by the robot in the forwards direction.
+	 * were traversed by the robot in the forwards direction in a straight
+	 * line.
 	 * 
 	 * The current position should be updated after each time the robot
 	 * moves successfully from one cell to another.
 	 * 
 	 * @param step - the number of cells traversed. Negative values
-	 * denote movement in the reverse direction (specifically, the 
-	 * robot moving in the opposite direction of that which it is facing in).
+	 * denote movement in the reverse direction.
 	 * 
 	 * @return the new coordinates
 	 */
 	public int[] updatePosition(int step) {
-		if (orientation%2 == 1) {
-			x+=step;
-		} else {
+		switch (orientation) {
+		case 0:
+			x-=step;
+			break;
+		case 1:
 			y+=step;
+			break;
+		case 2:
+			x+=step;
+			break;
+		case 3:
+			y-=step;
+			break;
 		}
 		return getCoordinates();
 	}
@@ -94,7 +96,48 @@ public class GPS {
 		x = startX;
 		y = startY;
 		this.orientation = orientation;
+		for (int i = 0; i < wallData.length; i++) {
+			for (int j = 0; j < wallData[i].length; j++) {
+				wallData[i][j].clear();
+			}
+		}
 	}
+	
+	public void setVisited(int x, int y) {
+		wallData[x][y].set(8);
+	}
+	
+	public void setDirectionTaken(int x, int y, int direction) {
+		if (direction < 4 && direction > -1) {
+			wallData[x][y].set(direction+4);
+		}
+	}
+	
+	public boolean setWalls(int x, int y, BitSet walls) {
+		if (!wallData[x][y].get(8)) {
+			for (int index = 0; index < 4; index++) {
+				if (walls.get(index)) {
+					wallData[x][y].set(index);
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public boolean getVisited(int x, int y) {
+		return wallData[x][y].get(8);
+	}
+	
+	public BitSet getDirectionsTaken(int x, int y) {
+		return wallData[x][y].get(4, 8);
+	}
+	
+	public BitSet getWalls(int x, int y) {
+		return wallData[x][y].get(0, 4);
+	}
+
 	public int[] getCoordinates() {
 		int[] coords = new int[2];
 		coords[0] = x;
