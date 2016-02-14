@@ -23,19 +23,18 @@ public class MazeRevealMap {
 		cellHeight = screenHeight/numRows;
 	}
 	/**
-	 * Refreshes the screen display with the current map data.
-	 */
-	public void update() {
-		
-	}
-	/**
 	 * Displays a blank map.
 	 */
 	public void reset() {
 		lcdScreen.clear();
 		lcdScreen.drawRect(0, 0, screenWidth-1, screenHeight-1); /* subtracting one
 													keeps it from going off the screen*/
-		
+		lcdScreen.setStrokeStyle(1);
+		for (int i = 0; i < numColumns; i++) {
+			for (int j = 0; j < numRows; j++) {
+				lcdScreen.drawRect(cellWidth*i, cellHeight*j, cellWidth, cellHeight);
+			}
+		}
 		/*Sound.playTone(587, 2*63);
 		Sound.playTone(587, 2*126);
 		Sound.playTone(587, 2*126);
@@ -52,10 +51,10 @@ public class MazeRevealMap {
 	 * @param direction
 	 */
 	public boolean drawWall(int x, int y, int direction) {
+		lcdScreen.setStrokeStyle(0);
 		// prevent walls from being drawn on outermost maze boundaries
 		if (x == 0 && direction == 3 || x == numColumns - 1 && direction == 1
-				|| y == 0 && direction == 0 || y == numRows - 1 && direction == 2
-				|| lcdScreen == null) {
+				|| y == 0 && direction == 0 || y == numRows - 1 && direction == 2) {
 			return false;
 		} else {
 			switch (direction) {

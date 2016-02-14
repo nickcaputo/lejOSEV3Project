@@ -16,12 +16,12 @@ public class GPS {
 	
 	/**
 	 * Class constructor
+	 * @param screen - the leJOS robot's lcd screen
 	 * @param startX - starting x position
 	 * @param startY - starting y position 
 	 * @param startOrientation - starting orientation (0=N, 1=E, 2=S, 3=W)
 	 * @param numRows - number of rows of cells in the maze
 	 * @param numColumns - number of columns of cells in the maze
-	 * @param screen - the leJOS robot's lcd screen
 	 */
 	public GPS(GraphicsLCD screen, int startX, int startY, int startOrientation, int numRows, int numColumns) {
 		x = startX;
@@ -43,7 +43,10 @@ public class GPS {
 	 * Updates the GPS with the robot's new orientation.
 	 * 
 	 * The orientation should be updated each time after
-	 * the robot has performed a 90 degree rotation.
+	 * the robot has performed a 90 degree rotation. Add
+	 * 1 to the current rotation for a clockwise
+	 * rotation or -1 for a counterclockwise
+	 * rotation.
 	 * 
 	 * @param newOrientation - the new orientation
 	 * @return the new orientation
@@ -68,21 +71,22 @@ public class GPS {
 	 */
 	public int[] updatePosition(int step) {
 		switch (orientation) {
-		case 0:
-			x-=step;
+		case 0: // robot moves north
+			y-=step;
 			break;
-		case 1:
-			y+=step;
-			break;
-		case 2:
+		case 1: // robot moves east
 			x+=step;
 			break;
-		case 3:
-			y-=step;
+		case 2: // robot moves south
+			y+=step;
+			break;
+		case 3: // robot moves west
+			x-=step;
 			break;
 		}
 		return getCoordinates();
 	}
+	
 	/**
 	 * Resets the GPS, blanking out walls on the map and placing the robot in a
 	 * new starting position.
@@ -102,7 +106,12 @@ public class GPS {
 			}
 		}
 	}
-	
+	/**
+	 * 
+	 */
+	public void prepGPS() {
+		mazeMap.reset();
+	}
 	public void setVisited(int x, int y) {
 		wallData[x][y].set(8);
 	}
@@ -118,6 +127,7 @@ public class GPS {
 			for (int index = 0; index < 4; index++) {
 				if (walls.get(index)) {
 					wallData[x][y].set(index);
+					mazeMap.drawWall(x, y, index);
 				}
 			}
 			return true;
