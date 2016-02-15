@@ -101,7 +101,7 @@ public class Cartographer {
 		while(colorSensor.getColorID() != Color.WHITE && !Button.ENTER.isDown()) {
 			currentPosition = gps.getCoordinates();
 			// Keep track that the robot came from the reverse direction
-			gps.setDirectionTaken(currentPosition[0], currentPosition[1], 2);
+			gps.setDirectionTaken(currentPosition[0], currentPosition[1], (orientation+2)%4);
 			// Gather data if cell is unfamiliar
 			if (!gps.getVisited(currentPosition[0], currentPosition[1])) {
 				scanCell(orientation, distanceScanData);
@@ -127,9 +127,9 @@ public class Cartographer {
 				int rotationAngle = (orientation-newOrientation) * 90;
 				if (Math.abs(rotationAngle) == 270) {
 					if (orientation-newOrientation < 0) {
-						rotationAngle += 180;
+						rotationAngle += 360;
 					} else {
-						rotationAngle -= 180;
+						rotationAngle -= 360;
 					}
 				}
 				
@@ -293,8 +293,9 @@ public class Cartographer {
 			direction = (direction + 1) % 4;
 		}
 		// If no good options: if only choices are one way or backwards, goes the
-		// one way. Turns around if all other options fail (i.e., dead end).
-		if (wallCount == 2) {
+		// one way. If two or more options, takes the leftmost path. 
+		// Turns around if all other options fail (i.e., dead end).
+		if (wallCount == 2 || wallCount == 1) {
 			for (int i = 0; i < 4; i++) {
 				if (!wallInfo.get(i) && i!=backwards) {
 					return i;
@@ -311,6 +312,7 @@ public class Cartographer {
 	public static void goHome() {
 		
 	}
+	
 	public static void playVictoryTuneOne() { // LoZ treasure chest item theme
 		Sound.playTone(880, 252);
 		Sound.playTone(932, 252);

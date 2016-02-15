@@ -206,7 +206,7 @@ public class GPS {
 			break;
 		}
 		if (neighborX < 0 || neighborY < 0 || neighborX >= numColumns || neighborY >= numRows) {
-			throw new IllegalArgumentException(/*"Attempted to look out-of-bounds" + "Standing at (" + x + ", " + y + ")\nlooking at (" + neighborX + ", " + neighborY + ") Facing " + direction*/"North wall:" + wallData[x][y].get(0) + " East wall:" + wallData[x][y].get(1) + " South wall:" + wallData[x][y].get(2) + " West wall:" + wallData[x][y].get(3) + " Facing " + orientation);
+			throw new IllegalArgumentException("Attempted to look out-of-bounds" + "Standing at (" + x + ", " + y + ")\nlooking at (" + neighborX + ", " + neighborY + ") Facing " + direction);
 		}
 		return wallData[neighborX][neighborY].get(8);
 	}
