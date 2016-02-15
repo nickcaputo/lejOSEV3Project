@@ -16,7 +16,8 @@ public class MazeRevealMap {
 		this.lcdScreen = lcdScreen;
 		lcdScreen.setStrokeStyle(0);
 		screenHeight = lcdScreen.getHeight();
-		screenWidth = lcdScreen.getWidth();
+		//screenWidth = lcdScreen.getWidth();
+		screenWidth = screenHeight;
 		this.numRows = numRows;
 		this.numColumns = numColumns;
 		cellWidth = screenWidth/numColumns;
@@ -35,14 +36,9 @@ public class MazeRevealMap {
 				lcdScreen.drawRect(cellWidth*i, cellHeight*j, cellWidth, cellHeight);
 			}
 		}
-		/*Sound.playTone(587, 2*63);
-		Sound.playTone(587, 2*126);
-		Sound.playTone(587, 2*126);
-		Sound.playTone(466, 2*63);
-		Sound.playTone(587, 2*126);
-		Sound.playTone(698, 2*252);
-		Sound.playTone(349, 2*252);*/
+		
 	}
+	
 	/**
 	 * Draws a wall on the map in front of the robot's view.
 	 * 
@@ -59,16 +55,16 @@ public class MazeRevealMap {
 		} else {
 			switch (direction) {
 			case 0: // suppose north wall
-				lcdScreen.drawLine(cellWidth * x, cellHeight * y, cellWidth * (x + 1), cellHeight * y);
+				lcdScreen.drawLine(cellWidth * x, cellHeight * (numRows - 1 - y), cellWidth * (x + 1), cellHeight * (numRows - 1 - y));
 				break;
 			case 1: // suppose east wall
-				lcdScreen.drawLine(cellWidth * (x + 1), cellHeight * y, cellWidth * (x + 1), cellHeight * (y + 1));
+				lcdScreen.drawLine(cellWidth * (x + 1), cellHeight * (numRows - 1 - y), cellWidth * (x + 1), cellHeight * ((numRows - 1 - y) + 1));
 				break;
 			case 2:// suppose south wall
-				lcdScreen.drawLine(cellWidth * x, cellHeight * (y + 1), cellWidth * (x + 1), cellHeight * (y + 1));
+				lcdScreen.drawLine(cellWidth * x, cellHeight * ((numRows - 1 - y) + 1), cellWidth * (x + 1), cellHeight * ((numRows - 1 - y) + 1));
 				break;
 			case 3:// suppose west wall
-				lcdScreen.drawLine(cellWidth * x, cellHeight * y, cellWidth * x, cellHeight * (y + 1));
+				lcdScreen.drawLine(cellWidth * x, cellHeight * (numRows - 1 - y), cellWidth * x, cellHeight * ((numRows - 1 - y) + 1));
 				break;
 			}
 			return true;

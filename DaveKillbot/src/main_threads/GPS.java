@@ -42,13 +42,13 @@ public class GPS {
 	/**
 	 * Updates the GPS with the robot's new orientation.
 	 * 
-	 * The orientation should be updated each time after
-	 * the robot has performed a 90 degree rotation. Add
-	 * 1 to the current rotation for a clockwise
-	 * rotation or -1 for a counterclockwise
+	 * The orientation should be updated after each time the robot 
+	 * has performed a 90 degree rotation. You
+	 * can add 1 to the current rotation for each clockwise
+	 * rotation or -1 for each counterclockwise
 	 * rotation.
 	 * 
-	 * @param newOrientation - the new orientation
+	 * @param newOrientation - the new orientation (0=N, 1=E, 2=S, 3=W)
 	 * @return the new orientation
 	 */
 	public int updateOrientation(int newOrientation) {
@@ -72,13 +72,13 @@ public class GPS {
 	public int[] updatePosition(int step) {
 		switch (orientation) {
 		case 0: // robot moves north
-			y-=step;
+			y+=step;
 			break;
 		case 1: // robot moves east
 			x+=step;
 			break;
 		case 2: // robot moves south
-			y+=step;
+			y-=step;
 			break;
 		case 3: // robot moves west
 			x-=step;
@@ -107,21 +107,44 @@ public class GPS {
 		}
 	}
 	/**
-	 * 
+	 * Readies the GPS by drawing a blank map.
 	 */
 	public void prepGPS() {
 		mazeMap.reset();
 	}
+	
+	/**
+	 * Set whether the cell has been visited already. This should be
+	 * done immediately before the robot leaves the cell.
+	 * 
+	 * @param x
+	 * @param y
+	 */
 	public void setVisited(int x, int y) {
 		wallData[x][y].set(8);
 	}
 	
+	/**
+	 * Keep track of which direction was taken to/from a cell.
+	 * 
+	 * @param x
+	 * @param y
+	 * @param direction
+	 */
 	public void setDirectionTaken(int x, int y, int direction) {
 		if (direction < 4 && direction > -1) {
 			wallData[x][y].set(direction+4);
 		}
 	}
 	
+	/**
+	 * Updates the map data with the wall layout of the current cell.
+	 * 
+	 * @param x
+	 * @param y
+	 * @param walls
+	 * @return - the wall data as a BitSet
+	 */
 	public boolean setWalls(int x, int y, BitSet walls) {
 		if (!wallData[x][y].get(8)) {
 			for (int index = 0; index < 4; index++) {
@@ -136,24 +159,84 @@ public class GPS {
 		}
 	}
 	
+	/**
+	 * Check whether this cell has been visited.
+	 * 
+	 * @param x
+	 * @param y
+	 * @return
+	 */
 	public boolean getVisited(int x, int y) {
 		return wallData[x][y].get(8);
 	}
 	
+	/**
+	 * Returns whether a neighboring cell in view has been visited.
+	 * 
+	 * @param direction
+	 * @return
+	 */
+	public boolean getVisitedNeighbor(int direction) {
+		int neighborX = x;
+		int neighborY = y;
+		switch (direction) {
+		case 0:
+			neighborY+=1;
+			break;
+		case 1:
+			neighborX+=1;
+			break;
+		case 2:
+			neighborY-=1;
+			break;
+		case 3:
+			neighborX-=1;
+			break;
+		}
+		if (neighborX < 0 || neighborY < 0 || neighborX >= numColumns || neighborY >= numRows) {
+			throw new IllegalArgumentException("Attempted to look out-of-bounds");
+		}
+		return wallData[neighborX][neighborY].get(8);
+	}
+	/**
+	 * Check what paths have been taken to or from a particular cell.
+	 * 
+	 * @param x
+	 * @param y
+	 * @return
+	 */
 	public BitSet getDirectionsTaken(int x, int y) {
 		return wallData[x][y].get(4, 8);
 	}
 	
+	/**
+	 * Check the layout of a cell's walls.
+	 * 
+	 * @param x
+	 * @param y
+	 * @return
+	 */
 	public BitSet getWalls(int x, int y) {
 		return wallData[x][y].get(0, 4);
 	}
-
+	
+	/**
+	 * Get the current coordinates.
+	 * 
+	 * @return an int array containing the current coordinates.
+	 */
 	public int[] getCoordinates() {
 		int[] coords = new int[2];
 		coords[0] = x;
 		coords[1] = y;
 		return coords;
 	}
+	
+	/**
+	 * Get the current direction the robot's body is facing.
+	 * 
+	 * @return
+	 */
 	public int getOrientation() {
 		return orientation;
 	}
