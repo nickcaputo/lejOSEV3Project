@@ -27,13 +27,28 @@ public class GPS {
 		x = startX;
 		y = startY;
 		orientation = startOrientation%4;
+		while (orientation < 0) {
+			orientation+=4;
+		}
 		this.numRows = numRows;
 		this.numColumns = numColumns;
 		wallData = new BitSet[numRows][numColumns];
 		mazeMap = new MazeRevealMap(screen, numRows, numColumns);
 		for (int i = 0; i < wallData.length; i++) {
 			for (int j = 0; j < wallData[i].length; j++) {
-				wallData[i][j] = new BitSet(9);
+				wallData[i][j] = new BitSet(9);/*
+				if (i == 0) {
+					wallData[i][j].set(3);
+				}
+				if (j == 0) {
+					wallData[i][j].set(2);
+				}
+				if (i == numColumns-1) {
+					wallData[i][j].set(1);
+				}
+				if (j == numRows-1) {
+					wallData[i][j].set(0);
+				}*/
 			}
 		}
 		
@@ -42,17 +57,14 @@ public class GPS {
 	/**
 	 * Updates the GPS with the robot's new orientation.
 	 * 
-	 * The orientation should be updated after each time the robot 
-	 * has performed a 90 degree rotation. You
-	 * can add 1 to the current rotation for each clockwise
-	 * rotation or -1 for each counterclockwise
-	 * rotation.
-	 * 
 	 * @param newOrientation - the new orientation (0=N, 1=E, 2=S, 3=W)
 	 * @return the new orientation
 	 */
 	public int updateOrientation(int newOrientation) {
 		orientation = newOrientation%4;
+		while (orientation < 0) {
+			orientation+=4;
+		}
 		return orientation;
 	}
 	
@@ -143,7 +155,7 @@ public class GPS {
 	 * @param x
 	 * @param y
 	 * @param walls
-	 * @return - the wall data as a BitSet
+	 * @return - success or failure
 	 */
 	public boolean setWalls(int x, int y, BitSet walls) {
 		if (!wallData[x][y].get(8)) {
@@ -194,7 +206,7 @@ public class GPS {
 			break;
 		}
 		if (neighborX < 0 || neighborY < 0 || neighborX >= numColumns || neighborY >= numRows) {
-			throw new IllegalArgumentException("Attempted to look out-of-bounds");
+			throw new IllegalArgumentException(/*"Attempted to look out-of-bounds" + "Standing at (" + x + ", " + y + ")\nlooking at (" + neighborX + ", " + neighborY + ") Facing " + direction*/"North wall:" + wallData[x][y].get(0) + " East wall:" + wallData[x][y].get(1) + " South wall:" + wallData[x][y].get(2) + " West wall:" + wallData[x][y].get(3) + " Facing " + orientation);
 		}
 		return wallData[neighborX][neighborY].get(8);
 	}

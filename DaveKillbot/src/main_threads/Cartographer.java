@@ -44,7 +44,7 @@ public class Cartographer {
 	static final int STARTING_X = 0;
 	static final int STARTING_Y = 0;
 	static final double MAX_DISTANCE = 1.23;
-	static final double TRAVEL_DISTANCE = 117;
+	static final double TRAVEL_DISTANCE = 112;
 	
 	public static void main(String[] args) {
 		// Sets up Pilot for robot and sensors for robot
@@ -90,7 +90,7 @@ public class Cartographer {
 		gps.prepGPS();
 		int orientation = gps.getOrientation();
 		int newOrientation;
-		int[] currentPosition = gps.getCoordinates();
+		int[] currentPosition;
 		bumpSampleProvider = bumpSensor.getTouchMode();
 		float[] bumpSample = new float[bumpSampleProvider.sampleSize()];
 		float[] distanceScanData = new float[4];
@@ -99,26 +99,46 @@ public class Cartographer {
 
 		//looking for white
 		while(colorSensor.getColorID() != Color.WHITE && !Button.ENTER.isDown()) {
+			currentPosition = gps.getCoordinates();
 			// Keep track that the robot came from the reverse direction
 			gps.setDirectionTaken(currentPosition[0], currentPosition[1], 2);
 			// Gather data if cell is unfamiliar
 			if (!gps.getVisited(currentPosition[0], currentPosition[1])) {
-				scanCell(distanceScanData);
+				scanCell(orientation, distanceScanData);
 			}
 			// Determine new direction of travel
 			newOrientation = getNewHeading(currentPosition, orientation);
+			switch (newOrientation) {
+			case 0:
+				Sound.playTone(520, 150);
+				break;
+			case 1:
+				Sound.playTone(622, 150);
+				break;
+			case 2:
+				Sound.playTone(784, 150);
+				break;
+			case 3:
+				Sound.playTone(932, 150);
+			}
 			
-			// Rotate if necessary
+			// Rotate if necessary. Efficient rotation direction.
 			if (newOrientation != orientation) {
-				int rotationAngle = (newOrientation-orientation) % 4 * 90;
+				int rotationAngle = (orientation-newOrientation) * 90;
 				if (Math.abs(rotationAngle) == 270) {
-					if (rotationAngle < 0) {
-						rotationAngle += 360;
+					if (orientation-newOrientation < 0) {
+						rotationAngle += 180;
 					} else {
-						rotationAngle -= 360;
+						rotationAngle -= 180;
 					}
 				}
+				
 				robotPilot.rotate(rotationAngle);
+				if (rotationAngle < 0) {
+					robotPilot.rotate(10);
+				} else {
+					robotPilot.rotate(-10);
+				}
 				orientation = newOrientation;
 				gps.updateOrientation(orientation);
 			}
@@ -131,21 +151,23 @@ public class Cartographer {
 			// Add this cell to the history.
 			cellHistory.add(new Integer[]{currentPosition[0], currentPosition[1]});
 			
-			// Make yo' move.
-			robotPilot.travel(TRAVEL_DISTANCE, true);
-									// the "true" argument means that this call returns immediately (instead of 
-									// waiting/blocking), and the code below runs while the robot travels
 			// Make note of what direction was chosen.
 			gps.setDirectionTaken(currentPosition[0], currentPosition[1], orientation);
 			
 			// Take note that the robot moved.
 			gps.updatePosition(1);
-			while (robotPilot.isMoving()) {
+						
+			// Make yo' move.
+			robotPilot.travel(TRAVEL_DISTANCE, true);
+									// the "true" argument means that this call returns immediately (instead of 
+									// waiting/blocking), and the code below runs while the robot travels
+			
+				while (robotPilot.isMoving()) {
 				bumpSampleProvider.fetchSample(bumpSample, 0);
 				if(bumpSample[0] == 1){ // is the touch sensor currently pushed in?
 					robotPilot.stop();
 					robotPilot.travel(-10);
-					robotPilot.rotate(10); // always turn 90 degrees when you bump into something? NO WAY MAN
+					robotPilot.rotate(-10); // always turn 90 degrees when you bump into something? NO WAY MAN
 				}
 				if (colorSensor.getColorID() == Color.WHITE){ // found the GOAL
 					break;
@@ -159,12 +181,11 @@ public class Cartographer {
 		// TODO: Figure out how much make-up distance is required (set to 18 for now)
 		robotPilot.travel(18);
 		// Scan the cell containing the goal
-		scanCell(distanceScanData);
-		gps.updatePosition(1);
+		scanCell(orientation, distanceScanData);
 		int[] goalCoords = gps.getCoordinates();
 		gps.setVisited(goalCoords[0], goalCoords[1]);
-		robotPilot.rotate(180);
-		gps.updateOrientation(orientation+2);
+		robotPilot.rotate(135);
+		gps.updateOrientation((orientation+2)%4);
 		return goalCoords;
 	}
 	
@@ -173,8 +194,9 @@ public class Cartographer {
 	 * 
 	 * @param distanceScanData
 	 */
-	public static void scanCell(float[] distanceScanData) {
-		// TODO: Remove redundant backwards scan.
+	public static void scanCell(int orientation, float[] distanceScanData) {
+		int direction = orientation;
+		int backwards = (orientation+2)%4;
 		int[] coords = gps.getCoordinates();
 		int count = 0;
 		while (count < 4){
@@ -187,10 +209,11 @@ public class Cartographer {
 			count++;
 		}
 		BitSet wallInfo = new BitSet(4);
-		for (int direction = 0; direction < 4; direction++) {
-			if (distanceScanData[direction] < MAX_DISTANCE) {
+		for (int counter = 0; counter < 4; counter++) {
+			if (distanceScanData[counter] < MAX_DISTANCE && direction != backwards) {
 				wallInfo.set(direction);
 			}
+			direction = (direction + 1) % 4;
 		}
 		frontNeckMotor.rotate(-360); // rotate neck back (otherwise cords will tighten/tangle).
 		gps.setWalls(coords[0], coords[1], wallInfo);
@@ -231,13 +254,15 @@ public class Cartographer {
 		 * 4. Drive on, you sexy robot, you.
 		 * 
 		 * 
-		 * POTENTIAL PROBLEM: If robot is faced with two consecutive corridors, it
-		 * might go back and forth between them in an infinite loop. Could be remedied
+		 * PROBLEM: If robot is faced with two consecutive corridors, it
+		 * goes back and forth between them in an infinite loop. Could be remedied
 		 * by choosing a non-backwards direction if the ONLY other option is a U-turn.
 		 * 
 		 */
 		
+		int wallCount = 3;
 		int newOrientation = currentOrientation;
+		int backwards = (currentOrientation+2)%4;
 		BitSet wallInfo = gps.getWalls(coordinates[0], coordinates[1]);
 		BitSet pathsTaken = gps.getDirectionsTaken(coordinates[0], coordinates[1]);
 		
@@ -245,9 +270,10 @@ public class Cartographer {
 		// body is facing. For example, if the robot is facing east, the robot will 
 		// check the data in index 0 first. (0=N, 1=E, 2=S, 3=W)
 		
-		int direction = (currentOrientation - 1) % 4;
+		int direction = (currentOrientation + 3) % 4;
 		for (int counter = 0; counter < 3; counter++) {
 			if (!wallInfo.get(direction)) {
+				wallCount--;
 				
 				// If the robot has been here before, we will try and travel
 				// in a direction not previously taken, still (hopefully) following DFS.
@@ -264,9 +290,17 @@ public class Cartographer {
 					}
 				}
 			}
-			direction = (direction++) % 4;
+			direction = (direction + 1) % 4;
 		}
-		// If no good options, goes back the way it came.
+		// If no good options: if only choices are one way or backwards, goes the
+		// one way. Turns around if all other options fail (i.e., dead end).
+		if (wallCount == 2) {
+			for (int i = 0; i < 4; i++) {
+				if (!wallInfo.get(i) && i!=backwards) {
+					return i;
+				}
+			}
+		}
 		return (currentOrientation + 2) % 4;
 	}
 	

@@ -30,12 +30,12 @@ public class MazeRevealMap {
 		lcdScreen.clear();
 		lcdScreen.drawRect(0, 0, screenWidth-1, screenHeight-1); /* subtracting one
 													keeps it from going off the screen*/
-		lcdScreen.setStrokeStyle(1);
+		/*lcdScreen.setStrokeStyle(1);
 		for (int i = 0; i < numColumns; i++) {
 			for (int j = 0; j < numRows; j++) {
 				lcdScreen.drawRect(cellWidth*i, cellHeight*j, cellWidth, cellHeight);
 			}
-		}
+		}*/
 		
 	}
 	
@@ -50,7 +50,7 @@ public class MazeRevealMap {
 		lcdScreen.setStrokeStyle(0);
 		// prevent walls from being drawn on outermost maze boundaries
 		if (x == 0 && direction == 3 || x == numColumns - 1 && direction == 1
-				|| y == 0 && direction == 0 || y == numRows - 1 && direction == 2) {
+				|| y == 0 && direction == 2 || y == numRows - 1 && direction == 0) {
 			return false;
 		} else {
 			switch (direction) {
