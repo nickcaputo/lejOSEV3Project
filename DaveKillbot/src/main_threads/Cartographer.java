@@ -44,7 +44,7 @@ public class Cartographer {
 	static final int STARTING_X = 0;
 	static final int STARTING_Y = 0;
 	static final double MAX_DISTANCE = 1.23;
-	static final double TRAVEL_DISTANCE = 112;
+	static final double TRAVEL_DISTANCE = 117;
 	
 	public static void main(String[] args) {
 		// Sets up Pilot for robot and sensors for robot
@@ -75,7 +75,8 @@ public class Cartographer {
 		LCD.clear();
 		Delay.msDelay(2000);
 		int[] goalLocation = findGoal();
-		// TODO: Indicate on the map the location of the goal?
+		mazeScreen.drawString("Goal: ", mazeScreen.getWidth()*3/4 - 3, 50, 0);
+		mazeScreen.drawString("(" + goalLocation[0] + "," + goalLocation[1] + ")", mazeScreen.getWidth()*3/4 - 3, 66, 0);
 		Button.waitForAnyPress();
 		Delay.msDelay(2000);
 		goHome();
@@ -88,6 +89,8 @@ public class Cartographer {
 	 */
 	public static int[] findGoal() {
 		gps.prepGPS();
+		mazeScreen.drawString("Home: ", mazeScreen.getWidth()*3/4 - 3, 10, 0);
+		mazeScreen.drawString("(" + STARTING_X + "," + STARTING_Y + ")", mazeScreen.getWidth()*3/4 - 3, 26, 0);
 		int orientation = gps.getOrientation();
 		int newOrientation;
 		int[] currentPosition;
@@ -242,24 +245,6 @@ public class Cartographer {
 	 * @return the new direction of travel
 	 */
 	public static int getNewHeading(int[] coordinates, int currentOrientation) {
-		//TODO: Polish this method, debug as necessary, etc.
-		
-		/* 1. Get wall data.
-		 * 2. Prioritize robot's left turn: check whether open. If open, check whether
-		 *    the adjoining cell has been visited. If not, proceed. If it has,
-		 *    make same checks in the next direction (up, then right).
-		 *    If all cells (besides reverse) have already been visited, or if all other paths
-		 *    are closed, revert to a previous cell.
-		 * 3. UPDATE GPS WITH NEW POSITION AND ORIENTATION.
-		 * 4. Drive on, you sexy robot, you.
-		 * 
-		 * 
-		 * PROBLEM: If robot is faced with two consecutive corridors, it
-		 * goes back and forth between them in an infinite loop. Could be remedied
-		 * by choosing a non-backwards direction if the ONLY other option is a U-turn.
-		 * 
-		 */
-		
 		int wallCount = 3;
 		int newOrientation = currentOrientation;
 		int backwards = (currentOrientation+2)%4;
@@ -295,11 +280,13 @@ public class Cartographer {
 		// If no good options: if only choices are one way or backwards, goes the
 		// one way. If two or more options, takes the leftmost path. 
 		// Turns around if all other options fail (i.e., dead end).
+		direction = (currentOrientation + 3) % 4;
 		if (wallCount == 2 || wallCount == 1) {
-			for (int i = 0; i < 4; i++) {
-				if (!wallInfo.get(i) && i!=backwards) {
-					return i;
+			for (int counter = 0; counter < 3; counter++) {
+				if (!wallInfo.get(direction) && direction!=backwards) {
+					return direction;
 				}
+				direction = (direction + 1) % 4;
 			}
 		}
 		return (currentOrientation + 2) % 4;

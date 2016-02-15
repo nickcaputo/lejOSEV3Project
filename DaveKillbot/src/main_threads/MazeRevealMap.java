@@ -28,8 +28,11 @@ public class MazeRevealMap {
 	 */
 	public void reset() {
 		lcdScreen.clear();
-		lcdScreen.drawRect(0, 0, screenWidth-1, screenHeight-1); /* subtracting one
-													keeps it from going off the screen*/
+		lcdScreen.drawRect(0, 0, screenWidth-1, screenHeight-1); 
+			/* subtracting one keeps it from going off the screen*/
+		
+		// Draw dashed lines to show cell positions (still deciding whether to do this)
+		
 		/*lcdScreen.setStrokeStyle(1);
 		for (int i = 0; i < numColumns; i++) {
 			for (int j = 0; j < numRows; j++) {
@@ -40,36 +43,32 @@ public class MazeRevealMap {
 	}
 	
 	/**
-	 * Draws a wall on the map in front of the robot's view.
+	 * Draws a wall on the map beside the robot in a particular direction.
 	 * 
-	 * @param x
-	 * @param y
-	 * @param direction
+	 * @param x - x-coordinate of the cell
+	 * @param y - y-coordinate of the cell
+	 * @param direction - cardinal direction of the side of the cell where there is a wall
+	 * @return - success/failure of the operation
 	 */
 	public boolean drawWall(int x, int y, int direction) {
+		//TODO: Should fail if given coordinates are outside the map.
 		lcdScreen.setStrokeStyle(0);
-		// prevent walls from being drawn on outermost maze boundaries
-		if (x == 0 && direction == 3 || x == numColumns - 1 && direction == 1
-				|| y == 0 && direction == 2 || y == numRows - 1 && direction == 0) {
-			return false;
-		} else {
-			switch (direction) {
-			case 0: // suppose north wall
-				lcdScreen.drawLine(cellWidth * x, cellHeight * (numRows - 1 - y), cellWidth * (x + 1), cellHeight * (numRows - 1 - y));
-				break;
-			case 1: // suppose east wall
-				lcdScreen.drawLine(cellWidth * (x + 1), cellHeight * (numRows - 1 - y), cellWidth * (x + 1), cellHeight * ((numRows - 1 - y) + 1));
-				break;
-			case 2:// suppose south wall
-				lcdScreen.drawLine(cellWidth * x, cellHeight * ((numRows - 1 - y) + 1), cellWidth * (x + 1), cellHeight * ((numRows - 1 - y) + 1));
-				break;
-			case 3:// suppose west wall
-				lcdScreen.drawLine(cellWidth * x, cellHeight * (numRows - 1 - y), cellWidth * x, cellHeight * ((numRows - 1 - y) + 1));
-				break;
-			}
-			return true;
+		
+		switch (direction) {
+		case 0: // suppose north wall
+			lcdScreen.drawLine(cellWidth * x, cellHeight * (numRows - 1 - y), cellWidth * (x + 1), cellHeight * (numRows - 1 - y));
+			break;
+		case 1: // suppose east wall
+			lcdScreen.drawLine(cellWidth * (x + 1), cellHeight * (numRows - 1 - y), cellWidth * (x + 1), cellHeight * ((numRows - 1 - y) + 1));
+			break;
+		case 2:// suppose south wall
+			lcdScreen.drawLine(cellWidth * x, cellHeight * ((numRows - 1 - y) + 1), cellWidth * (x + 1), cellHeight * ((numRows - 1 - y) + 1));
+			break;
+		case 3:// suppose west wall
+			lcdScreen.drawLine(cellWidth * x, cellHeight * (numRows - 1 - y), cellWidth * x, cellHeight * ((numRows - 1 - y) + 1));
+			break;
 		}
-
+		return true;
 	}
 	
 }

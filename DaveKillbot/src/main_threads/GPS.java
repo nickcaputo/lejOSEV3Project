@@ -36,7 +36,8 @@ public class GPS {
 		mazeMap = new MazeRevealMap(screen, numRows, numColumns);
 		for (int i = 0; i < wallData.length; i++) {
 			for (int j = 0; j < wallData[i].length; j++) {
-				wallData[i][j] = new BitSet(9);/*
+				wallData[i][j] = new BitSet(9);
+				// set walls on the maze boundaries
 				if (i == 0) {
 					wallData[i][j].set(3);
 				}
@@ -48,7 +49,7 @@ public class GPS {
 				}
 				if (j == numRows-1) {
 					wallData[i][j].set(0);
-				}*/
+				}
 			}
 		}
 		
