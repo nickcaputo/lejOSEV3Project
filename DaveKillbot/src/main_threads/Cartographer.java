@@ -29,9 +29,9 @@ public class Cartographer {
 	static DifferentialPilot robotPilot;
 	static RegulatedMotor frontNeckMotor = Motor.A;
 	static EV3UltrasonicSensor distanceSensor;
-	static EV3TouchSensor bumpSensor; 
+	//static EV3TouchSensor bumpSensor; 
 	static EV3ColorSensor colorSensor;
-	static SampleProvider bumpSampleProvider;
+	//static SampleProvider bumpSampleProvider;
 	static SampleProvider distanceSampleProvider;
 	static SampleProvider colorSampleProvider;
 	static GPS gps;
@@ -44,13 +44,13 @@ public class Cartographer {
 	static final int STARTING_X = 0;
 	static final int STARTING_Y = 0;
 	static final double MAX_DISTANCE = 1.23;
-	static final double TRAVEL_DISTANCE = 117;
+	static final double TRAVEL_DISTANCE = 112;
 	
 	public static void main(String[] args) {
 		// Sets up Pilot for robot and sensors for robot
 		robotPilot = new DifferentialPilot(5.4, 14.5, Motor.C, Motor.B, false);
 		distanceSensor = new EV3UltrasonicSensor(SensorPort.S1);
-		bumpSensor = new EV3TouchSensor(SensorPort.S2);
+		//bumpSensor = new EV3TouchSensor(SensorPort.S2);
 		colorSensor = new EV3ColorSensor(SensorPort.S4);
 		distanceSampleProvider = distanceSensor.getDistanceMode();
 
@@ -94,11 +94,11 @@ public class Cartographer {
 		int orientation = gps.getOrientation();
 		int newOrientation;
 		int[] currentPosition;
-		bumpSampleProvider = bumpSensor.getTouchMode();
-		float[] bumpSample = new float[bumpSampleProvider.sampleSize()];
+		//bumpSampleProvider = bumpSensor.getTouchMode();
+		//float[] bumpSample = new float[bumpSampleProvider.sampleSize()];
 		float[] distanceScanData = new float[4];
 
-		bumpSampleProvider.fetchSample(bumpSample, 0);
+		//bumpSampleProvider.fetchSample(bumpSample, 0);
 
 		//looking for white
 		while(colorSensor.getColorID() != Color.WHITE && !Button.ENTER.isDown()) {
@@ -166,7 +166,7 @@ public class Cartographer {
 									// waiting/blocking), and the code below runs while the robot travels
 			
 				while (robotPilot.isMoving()) {
-				bumpSampleProvider.fetchSample(bumpSample, 0);
+				/*bumpSampleProvider.fetchSample(bumpSample, 0);
 				if(bumpSample[0] == 1){ // is the touch sensor currently pushed in?
 					robotPilot.stop();
 					robotPilot.travel(-10);
@@ -174,7 +174,7 @@ public class Cartographer {
 				}
 				if (colorSensor.getColorID() == Color.WHITE){ // found the GOAL
 					break;
-				}
+				}*/
 			}
 		}
 		robotPilot.stop();
