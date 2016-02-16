@@ -311,7 +311,7 @@ public class Cartographer {
 		 * 3. Add the remaining list of cells to a Stack.
 		 * 4. Go to the next cell on the stack until robot is
 		 * 		home.
-		 * 5. Party like it's 2099.
+		 * 5. Party like it's 2999.
 		 * 
 		 */
 		System.out.println("lol");
