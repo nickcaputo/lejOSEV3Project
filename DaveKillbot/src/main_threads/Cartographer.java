@@ -90,25 +90,7 @@ public class Cartographer {
 			Music.playDirectionTone(newOrientation);
 
 			// Rotate if necessary. Efficient rotation direction.
-			if (newOrientation != orientation) {
-				int rotationAngle = (orientation - newOrientation) * 90;
-				if (Math.abs(rotationAngle) == 270) {
-					if (orientation - newOrientation < 0) {
-						rotationAngle += 360;
-					} else {
-						rotationAngle -= 360;
-					}
-				}
-
-				robotPilot.rotate(rotationAngle);
-				if (rotationAngle < 0) {
-					robotPilot.rotate(10);
-				} else {
-					robotPilot.rotate(-10);
-				}
-				orientation = newOrientation;
-				gps.updateOrientation(orientation);
-			}
+			rotateRobot(orientation, newOrientation);
 
 			// If this is the first visit to this cell, make note that it has
 			// been here.
@@ -130,7 +112,7 @@ public class Cartographer {
 
 			while (robotPilot.isMoving()) {
 
-				bumpSampleProvider.fetchSample(bumpSample, 0);
+				/*bumpSampleProvider.fetchSample(bumpSample, 0);
 
 				if (bumpSample[0] == 1) { // is the touch sensor currently
 											// pushed in?
@@ -138,7 +120,7 @@ public class Cartographer {
 					robotPilot.travel(-10);
 					robotPilot.rotate(-10); // always turn 90 degrees when you
 											// bump into something? NO WAY MAN
-				}
+				}*/
 
 				if (colorSensor.getColorID() == Color.WHITE) { // found the GOAL
 					break;
@@ -166,8 +148,7 @@ public class Cartographer {
 		Button.LEDPattern(4); // victory celebration!
 		Music.playVictoryTuneOne();
 
-		// TODO: Figure out how much make-up distance is required (set to 18 for
-		// now)
+		// TODO: Figure out how much make-up distance is required (set to 18 for now)
 		robotPilot.travel(18);
 
 		// Scan the cell containing the goal
@@ -175,9 +156,7 @@ public class Cartographer {
 
 		int[] goalCoords = gps.getCoordinates();
 		gps.setVisited(goalCoords[0], goalCoords[1]);
-		robotPilot.rotate(135);
-		gps.updateOrientation((orientation + 2) % 4);
-
+		gps.setDirectionTaken(goalCoords[0], goalCoords[1], (orientation + 2) % 4);
 		return goalCoords;
 	}
 
@@ -227,6 +206,35 @@ public class Cartographer {
 			Sound.playTone(523, 100);
 		}
 		return distanceSample[0];
+	}
+	
+	/**
+	 * Rotates the robot from one direction to another most efficiently.
+	 * 
+	 * @param oldOrientation
+	 * @param newOrientation
+	 */
+	public static void rotateRobot(int oldOrientation, int newOrientation) {
+		if (newOrientation != oldOrientation) {
+			int rotationAngle = (oldOrientation - newOrientation) * 90;
+			if (Math.abs(rotationAngle) == 270) {
+				if (oldOrientation - newOrientation < 0) {
+					rotationAngle += 360;
+				} else {
+					rotationAngle -= 360;
+				}
+			}
+			// Correction
+			// TODO: Figure out better correction methods.
+			robotPilot.rotate(rotationAngle);
+			if (rotationAngle < 0) {
+				robotPilot.rotate(10);
+			} else {
+				robotPilot.rotate(-10);
+			}
+			oldOrientation = newOrientation;
+			gps.updateOrientation(oldOrientation);
+		}
 	}
 
 	/**
@@ -294,7 +302,19 @@ public class Cartographer {
 	 * Go back to the starting cell.
 	 */
 	public static void goHome() {
-
+		// TODO
+		/*
+		 * PSEUDOCODE
+		 * 
+		 * 1. Add each cell in the cellHistory to a HashMap.
+		 * 2. Remove the range of cells between duplicates.
+		 * 3. Add the remaining list of cells to a Stack.
+		 * 4. Go to the next cell on the stack until robot is
+		 * 		home.
+		 * 5. Party like it's 2099.
+		 * 
+		 */
+		System.out.println("lol");
 	}
 
 	/**
@@ -308,14 +328,6 @@ public class Cartographer {
 		distanceSampleProvider = distanceSensor.getDistanceMode();
 
 		mazeScreen = BrickFinder.getDefault().getGraphicsLCD();
-		// infoScreen = BrickFinder.getDefault().getGraphicsLCD();
-
-		// The idea would be to switch between map and info screens. Display map
-		// at the end
-		// of a run. If this is impossible, I'll scrap the info screen and aim
-		// to draw stats
-		// such as current position and goal position next to the map.
-
 		gps = new GPS(mazeScreen, STARTING_X, STARTING_Y, 0, 4, 4);
 		cellHistory = new ArrayList<Integer[]>();
 	}
@@ -328,6 +340,39 @@ public class Cartographer {
 		robotPilot.setAcceleration(ACCELERATION);
 		robotPilot.setRotateSpeed(ROTATE_SPEED);
 		robotPilot.reset();
+	}
+	/**
+	 * When going back to the start position, tells the robot to move to the given cell.
+	 * The cell should be directly adjacent to the current cell.
+	 * 
+	 * @param coordinates
+	 */
+	public static void goToNeighbor(int[] coordinates) {
+		int[] currentPosition = gps.getCoordinates();
+		if (currentPosition.equals(coordinates)) {
+			return;
+		}
+		if (coordinates[0] != currentPosition[0] && coordinates[1] != currentPosition[1]) {
+			return;
+		}
+		int newOrientation;
+		if (coordinates[0] == currentPosition[0]) { // if the x values are the same
+			if (coordinates[1] < currentPosition[1]) {
+				newOrientation = 2;
+			} else {
+				newOrientation = 0;
+			}
+		} else { // if the y values are the same
+			if (coordinates[0] < currentPosition[0]) {
+				newOrientation = 3;
+			} else {
+				newOrientation = 1;
+			}
+		}
+		rotateRobot(gps.getOrientation(), newOrientation);
+		robotPilot.travel(TRAVEL_DISTANCE);
+		gps.updateOrientation(newOrientation);
+		gps.updatePosition(1);
 	}
 
 	/*
