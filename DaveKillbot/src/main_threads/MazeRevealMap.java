@@ -1,8 +1,7 @@
 package main_threads;
 
-import lejos.hardware.Sound;
 import lejos.hardware.lcd.GraphicsLCD;
-import lejos.utility.Delay;
+
 /**
  * 
  * @author CGreen
@@ -23,6 +22,7 @@ public class MazeRevealMap {
 		cellWidth = screenWidth/numColumns;
 		cellHeight = screenHeight/numRows;
 	}
+	
 	/**
 	 * Displays a blank map.
 	 */

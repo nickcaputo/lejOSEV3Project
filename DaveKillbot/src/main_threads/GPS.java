@@ -3,6 +3,8 @@ package main_threads;
 import java.util.BitSet;
 
 import lejos.hardware.lcd.GraphicsLCD;
+
+
 /**
  * 
  * @author CGreen
@@ -26,31 +28,40 @@ public class GPS {
 	public GPS(GraphicsLCD screen, int startX, int startY, int startOrientation, int numRows, int numColumns) {
 		x = startX;
 		y = startY;
-		orientation = startOrientation%4;
+		orientation = startOrientation % 4;
+		
 		while (orientation < 0) {
 			orientation+=4;
 		}
+		
 		this.numRows = numRows;
 		this.numColumns = numColumns;
 		wallData = new BitSet[numRows][numColumns];
 		mazeMap = new MazeRevealMap(screen, numRows, numColumns);
+		
 		for (int i = 0; i < wallData.length; i++) {
+			
 			for (int j = 0; j < wallData[i].length; j++) {
 				wallData[i][j] = new BitSet(9);
 				// set walls on the maze boundaries
 				if (i == 0) {
 					wallData[i][j].set(3);
 				}
+				
 				if (j == 0) {
 					wallData[i][j].set(2);
 				}
+				
 				if (i == numColumns-1) {
 					wallData[i][j].set(1);
 				}
+				
 				if (j == numRows-1) {
 					wallData[i][j].set(0);
 				}
+				
 			}
+			
 		}
 		
 	}
@@ -62,7 +73,7 @@ public class GPS {
 	 * @return the new orientation
 	 */
 	public int updateOrientation(int newOrientation) {
-		orientation = newOrientation%4;
+		orientation = newOrientation % 4;
 		while (orientation < 0) {
 			orientation+=4;
 		}
@@ -85,16 +96,16 @@ public class GPS {
 	public int[] updatePosition(int step) {
 		switch (orientation) {
 		case 0: // robot moves north
-			y+=step;
+			y += step;
 			break;
 		case 1: // robot moves east
-			x+=step;
+			x += step;
 			break;
 		case 2: // robot moves south
-			y-=step;
+			y -= step;
 			break;
 		case 3: // robot moves west
-			x-=step;
+			x -= step;
 			break;
 		}
 		return getCoordinates();
@@ -145,7 +156,7 @@ public class GPS {
 	 * @param direction
 	 */
 	public void setDirectionTaken(int x, int y, int direction) {
-		if (direction < 4 && direction > -1) {
+		if (direction <= 3 && direction >= 0) {
 			wallData[x][y].set(direction+4);
 		}
 	}
@@ -253,9 +264,11 @@ public class GPS {
 	public int getOrientation() {
 		return orientation;
 	}
+	
 	public int getX() {
 		return x;
 	}
+	
 	public int getY() {
 		return y;
 	}
