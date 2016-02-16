@@ -65,7 +65,7 @@ public class Cartographer {
 		mazeScreen.drawString("Home: ", mazeScreen.getWidth() * 3 / 4 - 3, 10, 0);
 		mazeScreen.drawString("(" + STARTING_X + "," + STARTING_Y + ")", mazeScreen.getWidth() * 3 / 4 - 3, 26, 0);
 		int orientation = gps.getOrientation();
-		
+
 		int[] currentPosition;
 		bumpSampleProvider = bumpSensor.getTouchMode();
 		float[] bumpSample = new float[bumpSampleProvider.sampleSize()];
@@ -76,15 +76,15 @@ public class Cartographer {
 		// looking for white
 		while (colorSensor.getColorID() != Color.WHITE) {
 			currentPosition = gps.getCoordinates();
-			
+
 			// Keep track that the robot came from the reverse direction
 			gps.setDirectionTaken(currentPosition[0], currentPosition[1], (orientation + 2) % 4);
-			
+
 			// Gather data if cell is unfamiliar
 			if (!gps.getVisited(currentPosition[0], currentPosition[1])) {
 				scanCell(orientation, distanceScanData);
 			}
-			
+
 			// Determine new direction of travel
 			int newOrientation = getNewHeading(currentPosition, orientation);
 			Music.playDirectionTone(newOrientation);
@@ -127,15 +127,11 @@ public class Cartographer {
 
 			// Make yo' move.
 			robotPilot.travel(TRAVEL_DISTANCE, true);
-			// the "true" argument means that this call returns immediately
-			// (instead of
-			// waiting/blocking), and the code below runs while the robot
-			// travels
 
 			while (robotPilot.isMoving()) {
-				
+
 				bumpSampleProvider.fetchSample(bumpSample, 0);
-				
+
 				if (bumpSample[0] == 1) { // is the touch sensor currently
 											// pushed in?
 					robotPilot.stop();
@@ -143,17 +139,27 @@ public class Cartographer {
 					robotPilot.rotate(-10); // always turn 90 degrees when you
 											// bump into something? NO WAY MAN
 				}
-				
+
 				if (colorSensor.getColorID() == Color.WHITE) { // found the GOAL
 					break;
 				}
-				
+
 			}
 		}
-		
+
 		return foundGoal(orientation, distanceScanData);
 	}
-	
+
+	/**
+	 * Does functions that are set upon finding the goal, and returns the
+	 * coordinates of the goal space
+	 * 
+	 * @param orientation,
+	 *            the orientation of where the robot is facing
+	 * @param distanceScanData,
+	 *            the distances in front of the robot
+	 * @return the coordinates of the goal space
+	 */
 	private static int[] foundGoal(int orientation, float[] distanceScanData) {
 		robotPilot.stop();
 		Button.LEDPattern(4); // victory celebration!
@@ -162,15 +168,15 @@ public class Cartographer {
 		// TODO: Figure out how much make-up distance is required (set to 18 for
 		// now)
 		robotPilot.travel(18);
-		
+
 		// Scan the cell containing the goal
 		scanCell(orientation, distanceScanData);
-		
+
 		int[] goalCoords = gps.getCoordinates();
 		gps.setVisited(goalCoords[0], goalCoords[1]);
 		robotPilot.rotate(135);
 		gps.updateOrientation((orientation + 2) % 4);
-		
+
 		return goalCoords;
 	}
 
@@ -263,14 +269,13 @@ public class Cartographer {
 			}
 			direction = (direction + 1) % 4;
 		}
-		
-		
+
 		// If no good options: if only choices are one way or backwards, goes
 		// the
 		// one way. If two or more options, takes the leftmost path.
 		// Turns around if all other options fail (i.e. dead end).
 		direction = (currentOrientation + 3) % 4;
-		
+
 		if (wallCount == 2 || wallCount == 1) {
 			for (int counter = 0; counter < 3; counter++) {
 				if (!wallInfo.get(direction) && direction != backwards) {
@@ -279,7 +284,7 @@ public class Cartographer {
 				direction = (direction + 1) % 4;
 			}
 		}
-		
+
 		return (currentOrientation + 2) % 4;
 	}
 
@@ -309,7 +314,7 @@ public class Cartographer {
 		// of a run. If this is impossible, I'll scrap the info screen and aim
 		// to draw stats
 		// such as current position and goal position next to the map.
-		
+
 		gps = new GPS(mazeScreen, STARTING_X, STARTING_Y, 0, 4, 4);
 		cellHistory = new ArrayList<Integer[]>();
 	}
@@ -323,8 +328,6 @@ public class Cartographer {
 		robotPilot.setRotateSpeed(ROTATE_SPEED);
 		robotPilot.reset();
 	}
-	
-	
 
 	/*
 	 * 
