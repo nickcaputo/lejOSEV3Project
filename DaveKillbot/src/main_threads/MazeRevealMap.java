@@ -15,8 +15,8 @@ public class MazeRevealMap {
 		this.lcdScreen = lcdScreen;
 		lcdScreen.setStrokeStyle(0);
 		screenHeight = lcdScreen.getHeight();
-		//screenWidth = lcdScreen.getWidth();
-		screenWidth = screenHeight;
+		//screenWidth = lcdScreen.getWidth(); // make the map rectangular (fill the screen)
+		screenWidth = screenHeight; // make the map a square
 		this.numRows = numRows;
 		this.numColumns = numColumns;
 		cellWidth = screenWidth/numColumns;

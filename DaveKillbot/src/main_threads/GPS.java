@@ -17,7 +17,19 @@ public class GPS {
 	private MazeRevealMap mazeMap;
 	
 	/**
-	 * Class constructor
+	 * Constructs a GPS object, which keeps track of the robot's position in the maze,
+	 * its orientation (the direction in which its body faces), and the size of the maze.
+	 * Also manages the map that draws the maze on the robot's LCD screen.
+	 * 
+	 * Orientation follows the code: 0=North, 1=East, 2=South, 3=West. Direction is absolute, 
+	 * relative to the robot's starting position. The initial orientation of the robot is always
+	 * north. Regardless of orientation afterward, north remains north, and 0 will always denote
+	 * north; likewise for the rest of the cardinal directions.
+	 * 
+	 * 'Direction' is often different from 'orientation.' In general, the variable 'direction' refers to one of the cardinal directions, and does
+	 * not necessarily reflect the orientation of the robot's body. The robot's head may be turned
+	 * in the direction of 'direction', or 'direction' may refer to a side of a cell.
+	 * 
 	 * @param screen - the leJOS robot's lcd screen
 	 * @param startX - starting x position
 	 * @param startY - starting y position 
@@ -115,9 +127,9 @@ public class GPS {
 	 * Resets the GPS, blanking out walls on the map and placing the robot in a
 	 * new starting position.
 	 * 
-	 * @param startX
-	 * @param startY
-	 * @param orientation
+	 * @param startX - the new starting position x value
+	 * @param startY - the new starting position y value
+	 * @param orientation - the robot's new starting orientation
 	 */
 	public void resetGPS(int startX, int startY, int orientation) {
 		mazeMap.reset();
@@ -130,8 +142,9 @@ public class GPS {
 			}
 		}
 	}
+	
 	/**
-	 * Readies the GPS by drawing a blank map.
+	 * Readies the GPS map display by drawing a blank map.
 	 */
 	public void prepGPS() {
 		mazeMap.reset();
@@ -141,8 +154,8 @@ public class GPS {
 	 * Set whether the cell has been visited already. This should be
 	 * done immediately before the robot leaves the cell.
 	 * 
-	 * @param x
-	 * @param y
+	 * @param x - x coordinate of the current cell
+	 * @param y - y coordinate of the current cell
 	 */
 	public void setVisited(int x, int y) {
 		wallData[x][y].set(8);
@@ -151,9 +164,9 @@ public class GPS {
 	/**
 	 * Keep track of which direction was taken to/from a cell.
 	 * 
-	 * @param x
-	 * @param y
-	 * @param direction
+	 * @param x - x coordinate of the current cell
+	 * @param y - y coordinate of the current cell
+	 * @param direction - cardinal direction
 	 */
 	public void setDirectionTaken(int x, int y, int direction) {
 		if (direction <= 3 && direction >= 0) {
@@ -186,8 +199,8 @@ public class GPS {
 	/**
 	 * Check whether this cell has been visited.
 	 * 
-	 * @param x
-	 * @param y
+	 * @param x - x coordinate of the current cell
+	 * @param y - y coordinate of the current cell
 	 * @return
 	 */
 	public boolean getVisited(int x, int y) {
@@ -197,8 +210,8 @@ public class GPS {
 	/**
 	 * Returns whether a neighboring cell in view has been visited.
 	 * 
-	 * @param direction
-	 * @return
+	 * @param direction - cardinal direction in which the neighbor cell is located
+	 * @return - whether the neighboring cell has been visited
 	 */
 	public boolean getVisitedNeighbor(int direction) {
 		int neighborX = x;
@@ -218,16 +231,16 @@ public class GPS {
 			break;
 		}
 		if (neighborX < 0 || neighborY < 0 || neighborX >= numColumns || neighborY >= numRows) {
-			throw new IllegalArgumentException("Attempted to look out-of-bounds" + "Standing at (" + x + ", " + y + ")\nlooking at (" + neighborX + ", " + neighborY + ") Facing " + direction);
+			throw new IllegalArgumentException("Attempted to look out-of-bounds standing at (" + x + ", " + y + ") looking at (" + neighborX + ", " + neighborY + ") facing " + direction);
 		}
 		return wallData[neighborX][neighborY].get(8);
 	}
 	/**
 	 * Check what paths have been taken to or from a particular cell.
 	 * 
-	 * @param x
-	 * @param y
-	 * @return
+	 * @param x - x coordinate of the cell
+	 * @param y - y coordinate of the cell
+	 * @return - BitSet containing the boolean value for each direction
 	 */
 	public BitSet getDirectionsTaken(int x, int y) {
 		return wallData[x][y].get(4, 8);
@@ -236,9 +249,9 @@ public class GPS {
 	/**
 	 * Check the layout of a cell's walls.
 	 * 
-	 * @param x
-	 * @param y
-	 * @return
+	 * @param x - y coordinate of the cell
+	 * @param y - y coordinate of the cell
+	 * @return - BitSet containing booleans denoting the presence of a wall
 	 */
 	public BitSet getWalls(int x, int y) {
 		return wallData[x][y].get(0, 4);
@@ -259,16 +272,26 @@ public class GPS {
 	/**
 	 * Get the current direction the robot's body is facing.
 	 * 
-	 * @return
+	 * @return - the current orientation of the robot
 	 */
 	public int getOrientation() {
 		return orientation;
 	}
 	
+	/**
+	 * Get the x-value of the current coordinates.
+	 * 
+	 * @return
+	 */
 	public int getX() {
 		return x;
 	}
 	
+	/**
+	 * Get the y-value of the current coordinates.
+	 * 
+	 * @return
+	 */
 	public int getY() {
 		return y;
 	}

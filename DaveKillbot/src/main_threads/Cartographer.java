@@ -1,6 +1,7 @@
 package main_threads;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 
 import lejos.hardware.BrickFinder;
@@ -10,7 +11,7 @@ import lejos.hardware.lcd.GraphicsLCD;
 import lejos.hardware.motor.Motor;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
-import lejos.hardware.sensor.EV3TouchSensor;
+//import lejos.hardware.sensor.EV3TouchSensor;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.robotics.Color;
 import lejos.robotics.RegulatedMotor;
@@ -21,18 +22,20 @@ import utilities.Music;
 import utilities.Write;
 
 /**
- * Tests mapmaking by roving about a maze.
+ * Roves about a maze from a designated start point to locate a goal, then
+ * returns to the starting position, documenting a map along the way.
  * 
  * @author CGreen
+ * @author npoCaputo
  *
  */
 public class Cartographer {
 	private static DifferentialPilot robotPilot;
 	private static RegulatedMotor frontNeckMotor = Motor.A;
 	private static EV3UltrasonicSensor distanceSensor;
-	private static EV3TouchSensor bumpSensor;
+	//private static EV3TouchSensor bumpSensor;
 	private static EV3ColorSensor colorSensor;
-	private static SampleProvider bumpSampleProvider;
+	//private static SampleProvider bumpSampleProvider;
 	private static SampleProvider distanceSampleProvider;
 	private static GPS gps;
 	private static GraphicsLCD mazeScreen;
@@ -45,6 +48,7 @@ public class Cartographer {
 	private static final int TRAVEL_SPEED = 30;
 	private static final int ROTATE_SPEED = 60;
 	private static final int ACCELERATION = 60;
+	private static final int ROTATION_CORRECTION = 10;
 
 	public static void main(String[] args) {
 
@@ -89,9 +93,11 @@ public class Cartographer {
 			int newOrientation = getNewHeading(currentPosition, orientation);
 			Music.playDirectionTone(newOrientation);
 
-			// Rotate if necessary. Efficient rotation direction.
+			// Rotate if necessary.
 			rotateRobot(orientation, newOrientation);
-
+			orientation = newOrientation;
+			gps.updateOrientation(orientation);
+			
 			// If this is the first visit to this cell, make note that it has
 			// been here.
 			if (!gps.getVisited(currentPosition[0], currentPosition[1])) {
@@ -134,8 +140,8 @@ public class Cartographer {
 	}
 
 	/**
-	 * Does functions that are set upon finding the goal, and returns the
-	 * coordinates of the goal space
+	 * Conducts functions that are set upon finding the goal, and returns the
+	 * coordinates of the goal space.
 	 * 
 	 * @param orientation,
 	 *            the orientation of where the robot is facing
@@ -163,7 +169,8 @@ public class Cartographer {
 	/**
 	 * Scan the current cell to detect walls and update the GPS.
 	 * 
-	 * @param distanceScanData
+	 * @param orientation - direction the robot's body is facing
+	 * @param distanceScanData - data from the distance scanner
 	 */
 	public static void scanCell(int orientation, float[] distanceScanData) {
 		int direction = orientation;
@@ -211,8 +218,8 @@ public class Cartographer {
 	/**
 	 * Rotates the robot from one direction to another most efficiently.
 	 * 
-	 * @param oldOrientation
-	 * @param newOrientation
+	 * @param oldOrientation - Direction robot currently faces
+	 * @param newOrientation - Direction robot faces following rotation
 	 */
 	public static void rotateRobot(int oldOrientation, int newOrientation) {
 		if (newOrientation != oldOrientation) {
@@ -224,23 +231,23 @@ public class Cartographer {
 					rotationAngle -= 360;
 				}
 			}
-			// Correction
 			// TODO: Figure out better correction methods.
 			robotPilot.rotate(rotationAngle);
 			if (rotationAngle < 0) {
-				robotPilot.rotate(10);
+				robotPilot.rotate(ROTATION_CORRECTION);
 			} else {
-				robotPilot.rotate(-10);
+				robotPilot.rotate(-ROTATION_CORRECTION);
 			}
-			oldOrientation = newOrientation;
-			gps.updateOrientation(oldOrientation);
 		}
 	}
 
 	/**
 	 * Determine the next direction to travel based on data from scans.
 	 * 
-	 * @return the new direction of travel
+	 * @param coordinates - Coordinates of the current cell
+	 * @param currentOrientation - current direction the robot is facing
+	 * 
+	 * @return the new direction that ought to be travelled
 	 */
 	public static int getNewHeading(int[] coordinates, int currentOrientation) {
 		int wallCount = 3;
@@ -249,12 +256,11 @@ public class Cartographer {
 		BitSet wallInfo = gps.getWalls(coordinates[0], coordinates[1]);
 		BitSet pathsTaken = gps.getDirectionsTaken(coordinates[0], coordinates[1]);
 
-		// Check directions starting with the direction TO THE LEFT of where the
-		// robot's
-		// body is facing. For example, if the robot is facing east, the robot
-		// will
-		// check the data in index 0 first. (0=N, 1=E, 2=S, 3=W)
-
+		/* Check directions starting with the direction TO THE LEFT of where the
+		* robot's body is facing. For example, if the robot is facing south, the robot
+		* will check the data in index 1 first. (0=N, 1=E, 2=S, 3=W)
+		*/
+		
 		int direction = (currentOrientation + 3) % 4;
 		for (int counter = 0; counter < 3; counter++) {
 			if (!wallInfo.get(direction)) {
@@ -263,6 +269,7 @@ public class Cartographer {
 				// If the robot has been here before, we will try and travel
 				// in a direction not previously taken, still (hopefully)
 				// following DFS.
+				
 				if (gps.getVisited(coordinates[0], coordinates[1])) {
 					if (!pathsTaken.get(direction)) {
 						newOrientation = direction;
@@ -279,10 +286,11 @@ public class Cartographer {
 			direction = (direction + 1) % 4;
 		}
 
-		// If no good options: if only choices are one way or backwards, goes
-		// the
-		// one way. If two or more options, takes the leftmost path.
-		// Turns around if all other options fail (i.e. dead end).
+		/* If no good options: if only choices are one way or backwards, goes the
+		* one way. If two or more options, takes the leftmost path.
+		* Turns around if all other options fail (i.e. dead end).
+		*/
+		
 		direction = (currentOrientation + 3) % 4;
 
 		if (wallCount == 2 || wallCount == 1) {
@@ -297,24 +305,35 @@ public class Cartographer {
 		return (currentOrientation + 2) % 4;
 	}
 
-	// TODO: Method to return to starting cell (STARTING_X, STARTING_Y)
 	/**
 	 * Go back to the starting cell.
 	 */
 	public static void goHome() {
-		// TODO
-		/*
-		 * PSEUDOCODE
-		 * 
-		 * 1. Add each cell in the cellHistory to a HashMap.
-		 * 2. Remove the range of cells between duplicates.
-		 * 3. Add the remaining list of cells to a Stack.
-		 * 4. Go to the next cell on the stack until robot is
-		 * 		home.
-		 * 5. Party like it's 2099.
-		 * 
-		 */
-		System.out.println("lol");
+		ArrayList<Integer[]> stepsHome = new ArrayList<Integer[]>();
+		for (int index = 0; index < cellHistory.size(); index++) {
+			if (isInArrayList(cellHistory.get(index), stepsHome)) {
+				Integer[] duplicate = cellHistory.get(index);
+				stepsHome.add(0, duplicate);
+				int indexOfDupe = findFirstInstance(duplicate, stepsHome);
+				if (indexOfDupe == -1) {
+					throw new ArrayIndexOutOfBoundsException("First coordinate instance was not found.");
+				}
+				stepsHome.remove(indexOfDupe);
+				while (!Arrays.equals(duplicate, stepsHome.get(indexOfDupe))) {
+					stepsHome.remove(indexOfDupe);
+				}
+			} else {
+				stepsHome.add(0, cellHistory.get(index));
+			}
+		}
+		int[] homeCoords = {STARTING_X, STARTING_Y};
+		while (gps.getCoordinates()!=homeCoords) {
+			int[] neighbor = {stepsHome.get(0)[0], stepsHome.get(0)[1]};
+			goToNeighbor(neighbor);
+			if (stepsHome.size() > 1) {
+				stepsHome.remove(0);
+			}
+		}
 	}
 
 	/**
@@ -323,7 +342,7 @@ public class Cartographer {
 	private static void setUpGlobals() {
 		robotPilot = new DifferentialPilot(5.4, 14.5, Motor.C, Motor.B, false);
 		distanceSensor = new EV3UltrasonicSensor(SensorPort.S1);
-		bumpSensor = new EV3TouchSensor(SensorPort.S2);
+		//bumpSensor = new EV3TouchSensor(SensorPort.S2);
 		colorSensor = new EV3ColorSensor(SensorPort.S4);
 		distanceSampleProvider = distanceSensor.getDistanceMode();
 
@@ -341,18 +360,18 @@ public class Cartographer {
 		robotPilot.setRotateSpeed(ROTATE_SPEED);
 		robotPilot.reset();
 	}
+	
 	/**
 	 * When going back to the start position, tells the robot to move to the given cell.
 	 * The cell should be directly adjacent to the current cell.
 	 * 
-	 * @param coordinates
+	 * @param coordinates - Array containing the x and y coordinates of the destination.
 	 */
 	public static void goToNeighbor(int[] coordinates) {
 		int[] currentPosition = gps.getCoordinates();
-		if (currentPosition.equals(coordinates)) {
-			return;
-		}
-		if (coordinates[0] != currentPosition[0] && coordinates[1] != currentPosition[1]) {
+		
+		// returns if current coords equal destination, or cells are not directly adjacent
+		if ((coordinates[0] == currentPosition[0]) == (coordinates[1] == currentPosition[1])) {
 			return;
 		}
 		int newOrientation;
@@ -374,6 +393,48 @@ public class Cartographer {
 		gps.updateOrientation(newOrientation);
 		gps.updatePosition(1);
 	}
+	
+	/**
+	 * Determines whether a particular coordinate is present in the list of coordinates the
+	 * robot must take to reach home.
+	 * 
+	 * This circumvents the faulty results from .equals() and .contains() methods for the
+	 * Integer[] objects.
+	 * 
+	 * @param cellCoords - cell coordinates in question
+	 * @param stepsHome - list of coordinates robot must visit to return home
+	 * @return
+	 */
+	public static boolean isInArrayList(Integer[] cellCoords, ArrayList<Integer[]> stepsHome) {
+		for (int index = 0; index < stepsHome.size(); index++) {
+			if (Arrays.equals(cellCoords, stepsHome.get(index))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Finds the index of the first instance of a coordinate pair in the steps
+	 * to get home.
+	 * 
+	 * This circumvents the faulty results from the .indexOf() method for the
+	 * Integer[] objects.
+	 * 
+	 * @param cellCoords - cell coordinates in question
+	 * @param stepsHome - list of coordinates robot must visit to return home
+	 * @return
+	 */
+	public static int findFirstInstance(Integer[] cellCoords, ArrayList<Integer[]> stepsHome) {
+		for (int index = 0; index < stepsHome.size(); index++) {
+			if (Arrays.equals(cellCoords, stepsHome.get(index))) {
+				return index;
+			}
+		}
+		return -1;
+	}
+	
+	
 
 	/*
 	 * 
@@ -414,12 +475,16 @@ public class Cartographer {
 			mazeScreen.drawString("(" + goalLocation[0] + "," + goalLocation[1] + ")",
 					mazeScreen.getWidth() * 3 / 4 - 3, 66, 0);
 
-			Button.waitForAnyPress();
-
-			Delay.msDelay(2000);
+			Delay.msDelay(1000);
+			
+			
 
 			goHome();
-
+			
+			Music.playVictoryTuneTwo();
+			
+			Button.waitForAnyPress();
+			
 			Write.clearScreen();
 		}
 	};
