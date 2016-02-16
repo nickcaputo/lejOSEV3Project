@@ -327,10 +327,10 @@ public class Cartographer {
 			}
 		}
 		int[] homeCoords = {STARTING_X, STARTING_Y};
-		while (gps.getCoordinates()!=homeCoords) {
+		while (!Arrays.equals(gps.getCoordinates(), homeCoords)) {
 			int[] neighbor = {stepsHome.get(0)[0], stepsHome.get(0)[1]};
 			goToNeighbor(neighbor);
-			if (stepsHome.size() > 1) {
+			if (stepsHome.size() > 0) {
 				stepsHome.remove(0);
 			}
 		}

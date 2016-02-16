@@ -31,14 +31,17 @@ public class Music {
 	}
 
 	/**
-	 * Plays the Legend of Zelda treasure chest item theme
+	 * Plays ???
 	 */
 	public static void playVictoryTuneTwo() {
-		// TODO CHANGE THIS TUNE TO SOMETHING ELSE
-		Sound.playTone(880, 252);
-		Sound.playTone(932, 252);
-		Sound.playTone(988, 252);
-		Sound.playTone(1046, 750);
+		Sound.playTone(698, 225*4);
+		Sound.playTone(659, 225);
+		Sound.playTone(698, 225);
+		Sound.playTone(659, 225*2);
+		Sound.playTone(523, 225*3);
+		Sound.playTone(440, 225);
+		Sound.playTone(587, 225*2);
+		Sound.playTone(440, 225*4);
 	}
 
 }
